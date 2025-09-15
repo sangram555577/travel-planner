@@ -17,10 +17,10 @@ import java.util.Map;
 @CrossOrigin(origins = "http://localhost:5173")
 public class FlightController {
 
-    @Value("${amadeus.api.key}")
+    @Value("${amadeus.api.key:}")
     private String amadeusApiKey;
 
-    @Value("${amadeus.api.secret}")
+    @Value("${amadeus.api.secret:}")
     private String amadeusApiSecret;
 
     private final RestTemplate restTemplate = new RestTemplate();
@@ -39,6 +39,12 @@ public class FlightController {
             @RequestParam String to,
             @RequestParam String date) {
         try {
+            // Check if API keys are configured
+            if (amadeusApiKey == null || amadeusApiKey.trim().isEmpty() ||
+                amadeusApiSecret == null || amadeusApiSecret.trim().isEmpty()) {
+                throw new RuntimeException("Amadeus API credentials are not configured. Please set amadeus.api.key and amadeus.api.secret in application.properties");
+            }
+            
             // 1. Get Amadeus API Access Token
             String accessToken = getAmadeusAccessToken();
 

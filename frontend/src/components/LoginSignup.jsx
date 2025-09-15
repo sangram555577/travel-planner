@@ -1,6 +1,5 @@
 import React, { useState, useContext, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import { Compass, AlertCircle } from 'lucide-react';
 
@@ -10,7 +9,7 @@ const LoginSignup = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   
-  const { user, login } = useContext(AuthContext);
+  const { user, login, register } = useContext(AuthContext);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -28,20 +27,28 @@ const LoginSignup = () => {
     setLoading(true);
     setError('');
 
-    const url = isLogin 
-      ? 'http://localhost:8080/api/v1/auth/login' 
-      : 'http://localhost:8080/api/v1/auth/signup';
-      
-    const payload = isLogin 
-      ? { email: formData.email, password: formData.password }
-      : { fullName: formData.fullName, email: formData.email, phone: formData.phone, password: formData.password };
-
     try {
-      const response = await axios.post(url, payload);
-      login(response.data);
+      let result;
+      if (isLogin) {
+        result = await login({ 
+          email: formData.email, 
+          password: formData.password 
+        });
+      } else {
+        result = await register({ 
+          fullName: formData.fullName, 
+          email: formData.email, 
+          phone: formData.phone, 
+          password: formData.password 
+        });
+      }
+      
+      if (!result.success) {
+        setError(result.message || 'Authentication failed');
+      }
     } catch (err) {
-      const errorMessage = err.response?.data?.message || 'An unexpected error occurred. Please try again.';
-      setError(errorMessage);
+      setError('An unexpected error occurred. Please try again.');
+      console.error('Authentication error:', err);
     } finally {
       setLoading(false);
     }

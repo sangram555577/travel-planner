@@ -1,39 +1,84 @@
-import React, { createContext, useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { createContext, useState, useEffect } from "react";
+import API from "../services/api";
 
-export const AuthContext = createContext(null);
+export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-    const [user, setUser] = useState(null);
-    const [token, setToken] = useState(localStorage.getItem('token'));
-    const navigate = useNavigate();
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        const storedUser = localStorage.getItem('user');
-        const storedToken = localStorage.getItem('token');
-        if (storedUser && storedToken) {
-            setUser(JSON.parse(storedUser));
-            setToken(storedToken);
-        }
-    }, []);
+  // Load user from localStorage on app start
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    const storedToken = localStorage.getItem("token");
 
-    const login = useCallback((authData) => {
-        localStorage.setItem('user', JSON.stringify(authData.user));
-        localStorage.setItem('token', authData.token);
-        setUser(authData.user);
-        setToken(authData.token);
-        navigate('/plan');
-    }, [navigate]);
+    if (storedUser && storedToken) {
+      setUser(JSON.parse(storedUser));
+    }
+    setLoading(false);
+  }, []);
 
-    const logout = useCallback(() => {
-        localStorage.removeItem('user');
-        localStorage.removeItem('token');
-        setUser(null);
-        setToken(null);
-        navigate('/login');
-    }, [navigate]);
+  // Login function
+  const login = async (credentials) => {
+    try {
+      const response = await API.post("/auth/login", credentials);
 
-    const value = { user, token, login, logout };
+      if (response.data && response.data.token) {
+        localStorage.setItem("token", response.data.token);
+        localStorage.setItem("user", JSON.stringify(response.data.user));
+        setUser(response.data.user);
+      }
 
-    return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+      return { success: true, user: response.data.user };
+    } catch (error) {
+      console.error("Login failed:", error);
+      return {
+        success: false,
+        message: error.response?.data?.message || "Login failed",
+      };
+    }
+  };
+
+  // Register function
+  const register = async (userData) => {
+    try {
+      const response = await API.post("/auth/signup", userData);
+
+      if (response.data && response.data.token) {
+        localStorage.setItem("token", response.data.token);
+        localStorage.setItem("user", JSON.stringify(response.data.user));
+        setUser(response.data.user);
+      }
+
+      return { success: true, user: response.data.user };
+    } catch (error) {
+      console.error("Registration failed:", error);
+      return {
+        success: false,
+        message: error.response?.data?.message || "Registration failed",
+      };
+    }
+  };
+
+  // Logout function
+  const logout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    setUser(null);
+  };
+
+  return (
+    <AuthContext.Provider
+      value={{
+        user,
+        login,
+        register,
+        logout,
+        loading,
+        isAuthenticated: !!user,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
 };

@@ -8,12 +8,8 @@ import com.TripFinder.repository.UserRepo;
 import com.TripFinder.service.AuthService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.oauth2.jwt.JwtClaimsSet;
-import org.springframework.security.oauth2.jwt.JwtEncoder;
-import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
 import java.util.Optional;
 
 /**
@@ -27,9 +23,6 @@ public class AuthServiceImpl implements AuthService {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
-
-    @Autowired
-    private JwtEncoder jwtEncoder;
 
     @Override
     public AuthResponse signUp(SignUpRequest signUpRequest) {
@@ -48,8 +41,8 @@ public class AuthServiceImpl implements AuthService {
 
         User savedUser = userRepo.save(newUser);
 
-        // Generate token and create response
-        String token = generateJwtToken(savedUser);
+        // Generate simple token (for now, just use user ID as token)
+        String token = "simple_token_" + savedUser.getId();
         return AuthResponse.fromUserAndToken(savedUser, token);
     }
 
@@ -64,29 +57,8 @@ public class AuthServiceImpl implements AuthService {
             throw new RuntimeException("Invalid credentials");
         }
 
-        // Generate token and create response
-        String token = generateJwtToken(user);
+        // Generate simple token (for now, just use user ID as token)
+        String token = "simple_token_" + user.getId();
         return AuthResponse.fromUserAndToken(user, token);
-    }
-
-    /**
-     * Generates a JWT for the given user.
-     *
-     * @param user The user for whom to generate the token.
-     * @return The JWT as a String.
-     */
-    private String generateJwtToken(User user) {
-        Instant now = Instant.now();
-        long expiry = 36000L; // 10 hours in seconds
-
-        JwtClaimsSet claims = JwtClaimsSet.builder()
-                .issuer("TripFinderApp")
-                .issuedAt(now)
-                .expiresAt(now.plusSeconds(expiry))
-                .subject(user.getEmail())
-                .claim("userId", user.getId())
-                .build();
-
-        return this.jwtEncoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
     }
 }
