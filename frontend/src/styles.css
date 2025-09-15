@@ -1,0 +1,125 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+  
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    line-height: 1.6;
+    color: #1f2937;
+    background-color: #f9fafb;
+    margin: 0;
+    padding: 0;
+  }
+  
+  /* Fix for fixed navbar */
+  body {
+    padding-top: 4rem;
+  }
+}
+
+@layer components {
+  /* Button Components */
+  .btn-primary {
+    @apply bg-primary-600 hover:bg-primary-700 text-white font-medium py-3 px-6 rounded-lg transition-all duration-300 transform hover:scale-105 active:scale-95 shadow-soft hover:shadow-medium;
+  }
+  
+  .btn-secondary {
+    @apply bg-secondary-200 hover:bg-secondary-300 text-secondary-800 font-medium py-3 px-6 rounded-lg transition-all duration-300 shadow-soft hover:shadow-medium;
+  }
+  
+  .btn-accent {
+    @apply bg-accent-500 hover:bg-accent-600 text-white font-medium py-3 px-6 rounded-lg transition-all duration-300 transform hover:scale-105 active:scale-95 shadow-soft hover:shadow-medium;
+  }
+  
+  /* Card Components */
+  .card {
+    @apply bg-white rounded-xl shadow-soft hover:shadow-medium transition-all duration-300 p-6;
+  }
+  
+  .card-elevated {
+    @apply bg-white rounded-xl shadow-medium hover:shadow-hard transition-all duration-300 p-8;
+  }
+  
+  /* Form Components */
+  .input {
+    @apply w-full px-4 py-3 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-300 bg-white;
+  }
+  
+  .input:focus {
+    @apply outline-none;
+  }
+  
+  /* Navigation Components */
+  .nav-link {
+    @apply text-secondary-600 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium transition-all duration-300;
+  }
+  
+  .nav-link.active {
+    @apply text-primary-600 font-semibold;
+  }
+  
+  /* Loading Animation */
+  .loading-spinner {
+    @apply animate-spin rounded-full border-b-2 border-white;
+  }
+  
+  /* Hero Section */
+  .hero-gradient {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  }
+  
+  /* Section Dividers */
+  .section {
+    @apply py-20;
+  }
+  
+  /* Text Utilities */
+  .text-gradient {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+}
+
+@layer utilities {
+  /* Custom scrollbar */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  
+  /* Glass effect */
+  .glass {
+    backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+  
+  /* Animation utilities */
+  .animate-slide-up {
+    animation: slideUp 0.3s ease-out;
+  }
+  
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+  }
+  
+  /* Hover effects */
+  .hover-lift {
+    @apply transform transition-all duration-300 hover:scale-105 hover:shadow-lg;
+  }
+}
