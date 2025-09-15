@@ -6,8 +6,11 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 
 import java.time.LocalDate;
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  * Represents a user's trip itinerary.
@@ -18,6 +21,7 @@ import java.time.LocalDate;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class Itinerary {
 
     @Id
@@ -44,4 +48,24 @@ public class Itinerary {
     @JoinColumn(name = "user_id", nullable = false)
     @NotNull(message = "Itinerary must be associated with a user")
     private User user;
+
+    @OneToMany(mappedBy = "itinerary", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+    @Builder.Default
+    private List<ItineraryItem> items = new ArrayList<>();
+
+    /**
+     * Helper method to add an item to the itinerary
+     */
+    public void addItem(ItineraryItem item) {
+        items.add(item);
+        item.setItinerary(this);
+    }
+
+    /**
+     * Helper method to remove an item from the itinerary
+     */
+    public void removeItem(ItineraryItem item) {
+        items.remove(item);
+        item.setItinerary(null);
+    }
 }

@@ -20,4 +20,12 @@ public interface ItineraryRepo extends JpaRepository<Itinerary, Long> { // <-- T
      * @return A list of {@link Itinerary} objects belonging to the specified user.
      */
     List<Itinerary> findByUserId(int userId);
+
+    /**
+     * Counts the number of itineraries for a specific user.
+     *
+     * @param userId The ID of the user.
+     * @return The number of itineraries belonging to the specified user.
+     */
+    long countByUserId(int userId);
 }

@@ -9,7 +9,9 @@ import Hotel from './components/Hotel';
 import FlightResults from './components/FlightResults';
 import ItineraryPlanner from './components/ItineraryPlanner';
 import Expenses from './components/Expenses';
+import AdminPage from './pages/AdminPage';
 import ProtectedRoute from './components/ProtectedRoute';
+import AdminRoute from './components/AdminRoute';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 
@@ -39,6 +41,12 @@ function App() {
           <Route 
             path="/itinerary" 
             element={<ProtectedRoute><ItineraryPlanner /></ProtectedRoute>} 
+          />
+          
+          {/* Admin Route */}
+          <Route 
+            path="/admin" 
+            element={<AdminRoute><AdminPage /></AdminRoute>} 
           />
         </Routes>
       </main>

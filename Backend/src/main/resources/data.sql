@@ -1,7 +1,9 @@
--- Insert sample users
-INSERT INTO users (full_name, email, phone, password) VALUES 
-('John Doe', 'john@example.com', '1234567890', '$2a$10$eImiTXuWVxfM37uY4JANjOhzlyQwHbBDJdGJw.4xz8K7.7L8XQ1.e'),
-('Jane Smith', 'jane@example.com', '0987654321', '$2a$10$eImiTXuWVxfM37uY4JANjOhzlyQwHbBDJdGJw.4xz8K7.7L8XQ1.e');
+-- Insert sample users (including admin)
+-- Password for all users is '12345678'
+-- Admin user is now created programmatically by AdminUserInitializer
+INSERT INTO users (full_name, email, phone, password, role) VALUES 
+('John Doe', 'john@example.com', '1234567890', '$2a$10$eImiTXuWVxfM37uY4JANjO8QgCfPo8HKBsj9EcC7yR1O5VzGkVDAK', 'USER'),
+('Jane Smith', 'jane@example.com', '0987654321', '$2a$10$eImiTXuWVxfM37uY4JANjO8QgCfPo8HKBsj9EcC7yR1O5VzGkVDAK', 'USER');
 
 -- Insert sample destinations
 INSERT INTO destinations (location, city, description, back_image) VALUES

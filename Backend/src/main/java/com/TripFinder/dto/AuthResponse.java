@@ -21,12 +21,14 @@ public record AuthResponse(
      * @param fullName The user's full name.
      * @param email The user's email address.
      * @param phone The user's phone number.
+     * @param role The user's role (USER or ADMIN).
      */
     public record UserDto(
         int id,
         String fullName,
         String email,
-        String phone
+        String phone,
+        String role
     ) {
         /**
          * Factory method to create a UserDto from a User entity.
@@ -39,7 +41,8 @@ public record AuthResponse(
                 user.getId(),
                 user.getFullName(),
                 user.getEmail(),
-                user.getPhone()
+                user.getPhone(),
+                user.getRole().name()
             );
         }
     }

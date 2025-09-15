@@ -8,8 +8,12 @@ import com.TripFinder.repository.UserRepo;
 import com.TripFinder.service.AuthService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.jwt.JwtClaimsSet;
+import org.springframework.security.oauth2.jwt.JwtEncoder;
+import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.util.Optional;
 
 /**
@@ -23,6 +27,26 @@ public class AuthServiceImpl implements AuthService {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private JwtEncoder jwtEncoder;
+
+    private String generateToken(User user) {
+        Instant now = Instant.now();
+        long expiry = 86400L; // 24 hours in seconds
+        
+        JwtClaimsSet claims = JwtClaimsSet.builder()
+                .issuer("TripFinder")
+                .issuedAt(now)
+                .expiresAt(now.plusSeconds(expiry))
+                .subject(user.getEmail())
+                .claim("userId", user.getId())
+                .claim("role", user.getRole().name())
+                .claim("fullName", user.getFullName())
+                .build();
+        
+        return this.jwtEncoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
+    }
 
     @Override
     public AuthResponse signUp(SignUpRequest signUpRequest) {
@@ -41,8 +65,8 @@ public class AuthServiceImpl implements AuthService {
 
         User savedUser = userRepo.save(newUser);
 
-        // Generate simple token (for now, just use user ID as token)
-        String token = "simple_token_" + savedUser.getId();
+        // Generate JWT token
+        String token = generateToken(savedUser);
         return AuthResponse.fromUserAndToken(savedUser, token);
     }
 
@@ -57,8 +81,8 @@ public class AuthServiceImpl implements AuthService {
             throw new RuntimeException("Invalid credentials");
         }
 
-        // Generate simple token (for now, just use user ID as token)
-        String token = "simple_token_" + user.getId();
+        // Generate JWT token
+        String token = generateToken(user);
         return AuthResponse.fromUserAndToken(user, token);
     }
 }

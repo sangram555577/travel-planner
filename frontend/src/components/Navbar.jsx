@@ -13,6 +13,7 @@ const Navbar = () => {
     { to: "/plan", text: "Plan Trip", private: true },
     { to: "/expenses", text: "Expenses", private: true },
     { to: "/itinerary", text: "Itinerary", private: true },
+    { to: "/admin", text: "Admin", private: true, adminOnly: true },
   ];
 
   const activeLinkStyle = {
@@ -37,20 +38,27 @@ const Navbar = () => {
           {/* Desktop Menu */}
           <div className="hidden md:block">
             <div className="ml-10 flex items-baseline space-x-4">
-              {navLinks.map((link) => (
-                (!link.private || user) && (
+              {navLinks.map((link) => {
+                // Check if link should be shown
+                const shouldShow = !link.private || (
+                  user && (!link.adminOnly || user.role === 'ADMIN')
+                );
+                
+                return shouldShow && (
                   <NavLink
                     key={link.to}
                     to={link.to}
                     className={({ isActive }) => 
-                      `nav-link ${isActive ? 'active' : ''} relative group`
+                      `nav-link ${isActive ? 'active' : ''} relative group ${
+                        link.adminOnly ? 'text-red-600 hover:text-red-700' : ''
+                      }`
                     }
                   >
                     {link.text}
                     <span className="absolute inset-x-0 -bottom-1 h-0.5 bg-primary-500 scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></span>
                   </NavLink>
-                )
-              ))}
+                );
+              })}
             </div>
           </div>
 
@@ -88,20 +96,27 @@ const Navbar = () => {
       {isMenuOpen && (
         <div className="md:hidden border-t border-secondary-200">
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-white/95 backdrop-blur-md">
-            {navLinks.map((link) => (
-              (!link.private || user) && (
+            {navLinks.map((link) => {
+              // Check if link should be shown
+              const shouldShow = !link.private || (
+                user && (!link.adminOnly || user.role === 'ADMIN')
+              );
+              
+              return shouldShow && (
                 <NavLink
                   key={link.to}
                   to={link.to}
                   onClick={() => setIsMenuOpen(false)}
                   className={({ isActive }) => 
-                    `nav-link ${isActive ? 'active' : ''} block px-3 py-2 rounded-md text-base font-medium`
+                    `nav-link ${isActive ? 'active' : ''} block px-3 py-2 rounded-md text-base font-medium ${
+                      link.adminOnly ? 'text-red-600 hover:text-red-700' : ''
+                    }`
                   }
                 >
                   {link.text}
                 </NavLink>
-              )
-            ))}
+              );
+            })}
             {/* Login/Logout Button (Mobile) */}
             <div className="pt-4 pb-3 border-t border-secondary-200">
                {user ? (

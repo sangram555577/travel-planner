@@ -1,96 +1,139 @@
 package com.TripFinder.controller;
 
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.*;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
+import com.TripFinder.dto.FlightSearchRequest;
+import com.TripFinder.dto.FlightResponse;
+import com.TripFinder.service.FlightService;
+import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.client.RestTemplate;
 
-import java.util.Map;
+import java.time.LocalDate;
+import java.util.List;
 
 /**
- * REST controller for fetching flight offers from the external Amadeus API.
+ * REST controller for flight search operations using Amadeus API
  */
 @RestController
 @RequestMapping("/api/v1/flights")
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = "${frontend.url:http://localhost:5173}")
 public class FlightController {
-
-    @Value("${amadeus.api.key:}")
-    private String amadeusApiKey;
-
-    @Value("${amadeus.api.secret:}")
-    private String amadeusApiSecret;
-
-    private final RestTemplate restTemplate = new RestTemplate();
-
+    
+    private static final Logger logger = LoggerFactory.getLogger(FlightController.class);
+    
+    @Autowired
+    private FlightService flightService;
+    
     /**
-     * Searches for flight offers based on origin, destination, and date.
+     * Search for flights with pagination and filtering
      *
-     * @param from The origin airport code (e.g., "DEL").
-     * @param to The destination airport code (e.g., "JAI").
-     * @param date The departure date in "YYYY-MM-DD" format.
-     * @return A ResponseEntity containing flight data or an error.
+     * @param searchRequest Flight search parameters
+     * @param page Page number (0-based)
+     * @param size Page size (max 50)
+     * @param sortBy Sort field (price, duration, departure_time)
+     * @param sortOrder Sort order (asc, desc)
+     * @return Paginated flight results
+     */
+    @PostMapping("/search")
+    public ResponseEntity<Page<FlightResponse>> searchFlights(
+            @Valid @RequestBody FlightSearchRequest searchRequest,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "price") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortOrder) {
+        
+        logger.info("Flight search request: {} -> {} on {}", 
+                searchRequest.getOrigin(), searchRequest.getDestination(), searchRequest.getDepartureDate());
+        
+        // Override request pagination with URL params if provided
+        searchRequest.setPage(page + 1); // Convert to 1-based
+        searchRequest.setSize(Math.min(size, 50)); // Cap at 50
+        searchRequest.setSortBy(sortBy);
+        searchRequest.setSortOrder(sortOrder);
+        
+        Pageable pageable = PageRequest.of(page, Math.min(size, 50));
+        Page<FlightResponse> results = flightService.searchFlights(searchRequest, pageable);
+        
+        return ResponseEntity.ok(results);
+    }
+    
+    /**
+     * Legacy GET endpoint for backward compatibility
      */
     @GetMapping
-    public ResponseEntity<?> getFlights(
+    public ResponseEntity<Page<FlightResponse>> getFlights(
             @RequestParam String from,
             @RequestParam String to,
-            @RequestParam String date) {
-        try {
-            // Check if API keys are configured
-            if (amadeusApiKey == null || amadeusApiKey.trim().isEmpty() ||
-                amadeusApiSecret == null || amadeusApiSecret.trim().isEmpty()) {
-                throw new RuntimeException("Amadeus API credentials are not configured. Please set amadeus.api.key and amadeus.api.secret in application.properties");
-            }
-            
-            // 1. Get Amadeus API Access Token
-            String accessToken = getAmadeusAccessToken();
-
-            // 2. Search for flights
-            String flightSearchUrl = String.format(
-                "https://test.api.amadeus.com/v2/shopping/flight-offers?originLocationCode=%s&destinationLocationCode=%s&departureDate=%s&adults=1&nonStop=true",
-                from, to, date
-            );
-
-            HttpHeaders flightHeaders = new HttpHeaders();
-            flightHeaders.setBearerAuth(accessToken);
-            HttpEntity<Void> flightRequestEntity = new HttpEntity<>(flightHeaders);
-
-            ResponseEntity<Map> flightResponse = restTemplate.exchange(
-                flightSearchUrl, HttpMethod.GET, flightRequestEntity, Map.class
-            );
-
-            return ResponseEntity.ok(flightResponse.getBody().get("data"));
-
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to fetch flight data. Please check parameters and API credentials. Reason: " + e.getMessage());
-        }
+            @RequestParam String date,
+            @RequestParam(defaultValue = "1") int adults,
+            @RequestParam(defaultValue = "0") int children,
+            @RequestParam(defaultValue = "ECONOMY") String travelClass,
+            @RequestParam(defaultValue = "false") boolean nonStop,
+            @RequestParam(defaultValue = "USD") String currency,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        
+        FlightSearchRequest searchRequest = FlightSearchRequest.builder()
+                .origin(from)
+                .destination(to)
+                .departureDate(LocalDate.parse(date))
+                .adults(adults)
+                .children(children)
+                .travelClass(travelClass)
+                .nonStop(nonStop)
+                .currency(currency)
+                .page(page + 1)
+                .size(Math.min(size, 50))
+                .build();
+        
+        Pageable pageable = PageRequest.of(page, Math.min(size, 50));
+        Page<FlightResponse> results = flightService.searchFlights(searchRequest, pageable);
+        
+        return ResponseEntity.ok(results);
     }
-
+    
     /**
-     * Authenticates with the Amadeus API to get an access token.
-     *
-     * @return The access token as a String.
+     * Get flight details by offer ID
      */
-    private String getAmadeusAccessToken() {
-        String tokenUrl = "https://test.api.amadeus.com/v1/security/oauth2/token";
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-
-        MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
-        body.add("grant_type", "client_credentials");
-        body.add("client_id", amadeusApiKey);
-        body.add("client_secret", amadeusApiSecret);
-
-        HttpEntity<MultiValueMap<String, String>> requestEntity = new HttpEntity<>(body, headers);
-
-        ResponseEntity<Map> response = restTemplate.postForEntity(tokenUrl, requestEntity, Map.class);
-
-        if (response.getStatusCode() != HttpStatus.OK || response.getBody() == null || !response.getBody().containsKey("access_token")) {
-            throw new RuntimeException("Could not obtain Amadeus access token");
-        }
-        return response.getBody().get("access_token").toString();
+    @GetMapping("/{offerId}")
+    public ResponseEntity<FlightResponse> getFlightDetails(@PathVariable String offerId) {
+        logger.info("Getting flight details for offer: {}", offerId);
+        
+        FlightResponse flight = flightService.getFlightDetails(offerId);
+        return ResponseEntity.ok(flight);
+    }
+    
+    /**
+     * Get available destinations from an origin
+     */
+    @GetMapping("/destinations")
+    public ResponseEntity<List<String>> getDestinations(
+            @RequestParam String origin) {
+        
+        List<String> destinations = flightService.getFlightDestinations(origin);
+        return ResponseEntity.ok(destinations);
+    }
+    
+    /**
+     * Get popular flight routes
+     */
+    @GetMapping("/popular-routes")
+    public ResponseEntity<List<String>> getPopularRoutes() {
+        List<String> routes = flightService.getPopularRoutes();
+        return ResponseEntity.ok(routes);
+    }
+    
+    /**
+     * Clear flight cache (admin endpoint)
+     */
+    @PostMapping("/cache/clear")
+    public ResponseEntity<String> clearCache() {
+        flightService.clearFlightCache();
+        return ResponseEntity.ok("Flight cache cleared successfully");
     }
 }

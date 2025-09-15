@@ -1,6 +1,7 @@
 package com.TripFinder.repository;
 
 import com.TripFinder.entity.User;
+import com.TripFinder.enums.Role;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -21,4 +22,12 @@ public interface UserRepo extends JpaRepository<User, Integer> {
      * @return An {@link Optional} containing the found user, or an empty Optional if no user with the given email exists.
      */
     Optional<User> findByEmail(String email);
+
+    /**
+     * Counts the number of users with a specific role.
+     *
+     * @param role The role to count.
+     * @return The number of users with the specified role.
+     */
+    long countByRole(Role role);
 }
